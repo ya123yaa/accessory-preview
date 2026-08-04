@@ -1,0 +1,206 @@
+<!--
+  ==========================================================
+  BASE フリーエリア埋め込み用: 装飾プレビュー機能
+  ==========================================================
+  使い方:
+  1. BASE管理画面 →「デザイン」→ 商品ページの「フリーエリア」に
+     この <div id="deco-preview-app"> 以下、</script>までを
+     まるごとコピー&ペーストしてください。
+  2. 実際の注文は、既存の「商品オプション(装飾1〜5)」の
+     プルダウンで受け付けます。この機能はあくまで見た目の
+     プレビュー(おまけ)です。
+  3. 装飾パーツ画像ができたら、DECORATIONS配列の img の値を
+     ダミー(SVGの丸)から実際の透過PNGのURLに差し替えてください。
+     (画像はBASEの「画像アップロード」から上げたURLを使えます)
+  ==========================================================
+-->
+
+<div id="deco-preview-app"></div>
+
+<style>
+  #deco-preview-app {
+    --ink: #20302A;
+    --brass: #B08A3E;
+    --canvas: #F1EBDD;
+    --canvas-dim: #E4DBC5;
+    --cord: #8C7A5B;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: var(--canvas);
+    border: 1px solid var(--canvas-dim);
+    border-radius: 2px;
+    padding: 24px;
+    max-width: 480px;
+    margin: 24px auto;
+  }
+  #deco-preview-app .dp-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--brass);
+    margin-bottom: 8px;
+  }
+  #deco-preview-app .dp-title {
+    font-family: Georgia, 'Noto Serif JP', serif;
+    font-size: 18px;
+    color: var(--ink);
+    margin: 0 0 16px;
+  }
+  #deco-preview-app .dp-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  #deco-preview-app svg { width: 220px; height: 220px; }
+  #deco-preview-app .dp-status {
+    text-align: center;
+    font-size: 11px;
+    color: var(--cord);
+    margin-bottom: 18px;
+  }
+  #deco-preview-app .dp-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  #deco-preview-app .dp-slot-label {
+    font-size: 11px;
+    color: var(--ink);
+    width: 52px;
+    flex-shrink: 0;
+  }
+  #deco-preview-app select {
+    flex: 1;
+    font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid var(--canvas-dim);
+    border-radius: 2px;
+    background: white;
+    color: var(--ink);
+  }
+  #deco-preview-app .dp-note {
+    font-size: 10px;
+    color: var(--cord);
+    margin-top: 14px;
+    line-height: 1.6;
+    border-top: 1px solid var(--canvas-dim);
+    padding-top: 12px;
+  }
+</style>
+
+<script>
+(function () {
+  // ---- 20種類の装飾。price/colorはBASEオプションの内容と揃えること ----
+  // img: ダミーとして色つきの丸(data URI)を使用。
+  //      実際のパーツ画像ができたら "https://.../star.png" のように差し替え。
+  var DECORATIONS = [
+    { id: "none",  label: "選択しない", price: 0,   color: null },
+    { id: "star",  label: "スター",     price: 300, color: "#D9B876" },
+    { id: "pearl", label: "パール",     price: 400, color: "#F5EFE0" },
+    { id: "heart", label: "ハート",     price: 350, color: "#B5665A" },
+    { id: "leaf",  label: "リーフ",     price: 300, color: "#6E7F5C" },
+    { id: "moon",  label: "ムーン",     price: 450, color: "#C9C2A8" },
+    { id: "sunrise", label: "サンライズ", price: 300, color: "#E0A85C" },
+    { id: "snow",  label: "スノー",     price: 400, color: "#EDEEE9" },
+    { id: "clover",label: "クローバー", price: 350, color: "#8C4A42" },
+    { id: "wave",  label: "ウェーブ",   price: 300, color: "#4F6B63" },
+    { id: "berry", label: "ベリー",     price: 450, color: "#A9765B" },
+    { id: "feather",label:"フェザー",   price: 300, color: "#C7B6D9" },
+    { id: "diamond",label:"ダイヤ",     price: 400, color: "#DCC24A" },
+    { id: "drop",  label: "ドロップ",   price: 350, color: "#B98F6B" },
+    { id: "shell", label: "シェル",     price: 300, color: "#DCE4DE" },
+    { id: "blossom",label:"ブロッサム", price: 450, color: "#D98CA0" },
+    { id: "compass",label:"コンパス",   price: 300, color: "#7A8FA6" },
+    { id: "ribbon",label: "リボン",     price: 400, color: "#C99CA6" },
+    { id: "spark", label: "スパーク",   price: 350, color: "#E3D2A0" },
+    { id: "mist",  label: "ミスト",     price: 300, color: "#9FB0AC" },
+    { id: "amber", label: "アンバー",   price: 450, color: "#B08A3E" },
+  ];
+
+  var SLOT_ANGLES = [-60, -25, 15, 50, 90]; // 装飾1〜5の固定配置
+
+  var root = document.getElementById("deco-preview-app");
+
+  var html = ''
+    + '<p class="dp-eyebrow">LIVE PREVIEW</p>'
+    + '<h3 class="dp-title">装飾ブレスレット</h3>'
+    + '<div class="dp-canvas-wrap"><svg id="dp-svg" viewBox="0 0 300 300"></svg></div>'
+    + '<p class="dp-status" id="dp-status">装飾を選ぶとその場に反映されます</p>';
+
+  for (var i = 1; i <= 5; i++) {
+    html += '<div class="dp-slot-row">'
+      + '<span class="dp-slot-label">装飾' + i + '</span>'
+      + '<select data-slot="' + i + '" class="dp-select"></select>'
+      + '</div>';
+  }
+
+  html += '<p class="dp-note">'
+    + '※ここで選んだ内容はプレビュー用です。実際のご注文は、'
+    + '下部の「商品オプション(装飾1〜5)」から改めてお選びください。'
+    + '同じ装飾は複数スロットで選ばないようご注意ください。'
+    + '</p>';
+
+  root.innerHTML = html;
+
+  // プルダウンに20種類をセット
+  var selects = root.querySelectorAll(".dp-select");
+  selects.forEach(function (sel) {
+    DECORATIONS.forEach(function (d) {
+      var opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = d.price > 0 ? d.label + " (+¥" + d.price.toLocaleString() + ")" : d.label;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", render);
+  });
+
+  function polarPoint(angleDeg, r) {
+    var rad = (angleDeg * Math.PI) / 180;
+    return {
+      x: 150 + r * Math.sin(rad),
+      y: 150 - r * Math.cos(rad),
+    };
+  }
+
+  function render() {
+    var svg = document.getElementById("dp-svg");
+    var parts = [];
+
+    // 土台(実写に差し替える場合はcircleの代わりに<image>タグを使う)
+    parts.push('<circle cx="150" cy="150" r="130" fill="#F1EBDD" />');
+    parts.push('<circle cx="150" cy="150" r="92" fill="none" stroke="#8C7A5B" stroke-width="3" stroke-dasharray="1.5 5.5" stroke-linecap="round" />');
+    parts.push('<circle cx="150" cy="150" r="92" fill="none" stroke="#B08A3E" stroke-width="0.6" opacity="0.5" />');
+
+    var count = 0;
+    var seen = {};
+    var dup = false;
+
+    selects.forEach(function (sel, idx) {
+      var d = DECORATIONS.find(function (x) { return x.id === sel.value; });
+      if (!d || d.id === "none") return;
+      if (seen[d.id]) dup = true;
+      seen[d.id] = true;
+      count++;
+      var p = polarPoint(SLOT_ANGLES[idx], 92);
+      parts.push(
+        '<g transform="translate(' + p.x + ',' + p.y + ')">' +
+        '<circle r="2.4" fill="none" stroke="#B08A3E" stroke-width="1.4" cy="-11" />' +
+        '<circle r="8" fill="' + d.color + '" stroke="#00000022" stroke-width="0.5" />' +
+        '</g>'
+      );
+    });
+
+    svg.innerHTML = parts.join("");
+
+    var status = document.getElementById("dp-status");
+    if (count === 0) {
+      status.textContent = "装飾を選ぶとその場に反映されます";
+    } else if (dup) {
+      status.textContent = "⚠ 同じ装飾が重複しています。スロットを見直してください";
+    } else {
+      status.textContent = count + " / 5 個選択中";
+    }
+  }
+
+  render();
+})();
+</script>
