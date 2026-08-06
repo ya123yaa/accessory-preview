@@ -11,8 +11,11 @@
 <title>装飾ブレスレット プレビュー</title>
 <style>
   :root {
-    --ink: #20302A; --brass: #B08A3E; --canvas: #F1EBDD;
-    --canvas-dim: #E4DBC5; --cord: #8C7A5B;
+    --ink: #0B0D10;       /* 深いブラック */
+    --brass: #9AA5B1;     /* クールシルバー(アクセント) */
+    --canvas: #F3F5F7;    /* ほぼ白 */
+    --canvas-dim: #D9DEE3;/* 淡いシルバーグレー */
+    --cord: #6B7480;      /* クールグレー */
   }
   * { box-sizing: border-box; }
   body {
@@ -20,16 +23,30 @@
     background: var(--ink); display: flex; justify-content: center; padding: 32px 16px;
   }
   .card {
-    width: 100%; max-width: 720px; background: var(--canvas);
-    border-radius: 2px; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+    width: 100%; max-width: 720px;
+    background: linear-gradient(180deg, #FFFFFF 0%, var(--canvas) 100%);
+    border: 1px solid var(--canvas-dim);
+    border-radius: 2px; overflow: hidden;
+    box-shadow: 0 30px 70px -20px rgba(0,0,0,0.75);
   }
   .header {
     padding: 24px 28px 18px; border-bottom: 1px solid var(--canvas-dim);
     display: flex; justify-content: space-between; align-items: baseline;
+    background: linear-gradient(90deg, #0B0D10 0%, #1B1F24 100%);
   }
-  .eyebrow { font-size: 10px; letter-spacing: 0.25em; color: var(--brass); margin: 0 0 6px; }
-  .title { font-family: Georgia, 'Noto Serif JP', serif; font-size: 22px; color: var(--ink); margin: 0; }
-  .sub { font-size: 11px; color: var(--cord); }
+  .eyebrow {
+    font-size: 10px; letter-spacing: 0.35em; margin: 0 0 6px;
+    background: linear-gradient(160deg, #FFFFFF 0%, #B7BEC7 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .title {
+    font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 700;
+    letter-spacing: 0.01em; font-size: 22px; margin: 0;
+    background: linear-gradient(160deg, #FFFFFF 0%, #E4E7EB 45%, #A9B0BA 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
+  .sub { font-size: 10px; letter-spacing: 0.15em; color: var(--brass); }
 
   .body { display: grid; grid-template-columns: 1fr; }
   @media (min-width: 640px) { .body { grid-template-columns: 1.1fr 1fr; } }
@@ -48,10 +65,10 @@
   .panel { padding: 28px; border-top: 1px solid var(--canvas-dim); }
   @media (min-width: 640px) { .panel { border-top: none; border-left: 1px solid var(--canvas-dim); } }
 
-  .field-label { font-size: 10px; letter-spacing: 0.2em; color: var(--brass); margin: 0 0 8px; }
+  .field-label { font-size: 10px; letter-spacing: 0.3em; color: var(--brass); margin: 0 0 8px; text-transform: uppercase; }
   select {
     width: 100%; font-size: 12px; padding: 8px 10px; border: 1px solid var(--canvas-dim);
-    border-radius: 2px; background: white; color: var(--ink); margin-bottom: 16px;
+    border-radius: 2px; background: #FFFFFF; color: var(--ink); margin-bottom: 16px;
   }
   .slot-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .slot-label { font-size: 11px; color: var(--ink); width: 56px; flex-shrink: 0; }
@@ -61,8 +78,12 @@
   .price-box { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--canvas-dim); }
   .price-line { display: flex; justify-content: space-between; font-size: 12px; color: var(--cord); margin-bottom: 6px; }
   .price-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--canvas-dim); }
-  .price-total .label { font-size: 11px; letter-spacing: 0.2em; color: var(--ink); }
-  .price-total .value { font-size: 26px; color: var(--ink); font-family: Georgia, serif; }
+  .price-total .label { font-size: 10px; letter-spacing: 0.3em; color: var(--ink); }
+  .price-total .value {
+    font-size: 28px; font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 800; letter-spacing: 0.01em;
+    color: #14171B;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  }
 
   .note { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--canvas-dim); font-size: 10px; color: var(--cord); line-height: 1.7; }
 </style>
@@ -122,15 +143,16 @@ const CHAINS = [
 ];
 
 // type: "dangle" = ぶら下げ型 / "spacer" = チェーンに直接乗るタイプ
+// widthScale: 幅だけの倍率(1.0が標準。0.8で細く、1.2で太く見せられる。高さには影響しません)
 const CHARMS = [
   { id: "none",        label: "選択しない",             price: 0,   img: null, type: "none" },
-  { id: "heel_set",     label: "ハイヒール&リップセット", price: 600, img: IMAGES.heel_set,   type: "dangle" },
-  { id: "bag",          label: "ショッピングバッグ",     price: 450, img: IMAGES.bag,         type: "dangle" },
-  { id: "pencil",       label: "ペンシル",               price: 300, img: IMAGES.pencil,      type: "dangle" },
-  { id: "heart",        label: "ハート",                 price: 400, img: IMAGES.heart,       type: "dangle" },
-  { id: "bear",         label: "ベア",                   price: 450, img: IMAGES.bear,        type: "dangle" },
-  { id: "spacer_pink",  label: "ピンクスペーサー",       price: 500, img: IMAGES.spacer_pink, type: "spacer" },
-  { id: "spacer_star",  label: "スタースペーサー",       price: 500, img: IMAGES.spacer_star, type: "spacer" },
+  { id: "heel_set",     label: "ハイヒール&リップセット", price: 600, img: IMAGES.heel_set,   type: "dangle", widthScale: 1.0 },
+  { id: "bag",          label: "ショッピングバッグ",     price: 450, img: IMAGES.bag,         type: "dangle", widthScale: 1.0 },
+  { id: "pencil",       label: "ペンシル",               price: 300, img: IMAGES.pencil,      type: "dangle", widthScale: 1.0 },
+  { id: "heart",        label: "ハート",                 price: 400, img: IMAGES.heart,       type: "dangle", widthScale: 1.0 },
+  { id: "bear",         label: "ベア",                   price: 450, img: IMAGES.bear,        type: "dangle", widthScale: 1.0 },
+  { id: "spacer_pink",  label: "ピンクスペーサー",       price: 500, img: IMAGES.spacer_pink, type: "spacer", widthScale: 1.0 },
+  { id: "spacer_star",  label: "スタースペーサー",       price: 500, img: IMAGES.spacer_star, type: "spacer", widthScale: 1.0 },
 ];
 
 // ぶら下げ型:輪の下に垂れる位置(5箇所)
@@ -222,8 +244,9 @@ function positionCharms() {
     const ratio = type === "spacer" ? SPACER_HEIGHT_RATIO : DANGLE_HEIGHT_RATIO;
     const posArr = type === "spacer" ? SPACER_POS : DANGLE_POS;
 
+    const widthScale = parseFloat(el.dataset.widthScale) || 1;
     const charmHpx = wrapH * ratio;
-    const charmWpx = charmHpx * (natW / natH);
+    const charmWpx = charmHpx * (natW / natH) * widthScale;
 
     const pos = posArr[idx];
     const slotXpx = wrapW * (pos.x / 100);
@@ -265,6 +288,7 @@ function render() {
     wrapper.dataset.charmId = c.id;
     wrapper.dataset.slotIdx = idx;
     wrapper.dataset.type = c.type;
+    wrapper.dataset.widthScale = c.widthScale || 1;
 
     const img = document.createElement("img");
     img.src = c.img;
